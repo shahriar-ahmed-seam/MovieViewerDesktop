@@ -1,0 +1,139 @@
+{
+  "name": "movieviewer-desktop",
+  "version": "1.1.0",
+  "description": "A cross-platform desktop media streaming browser and player for personal HTTP media servers.",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && npm run build:electron",
+    "build:electron": "esbuild src/main/index.ts --bundle --platform=node --external:electron --outfile=dist/main/index.js && esbuild src/main/preload.ts --bundle --platform=node --external:electron --outfile=dist/main/preload.js",
+    "preview": "vite preview",
+    "start": "npm run build:electron && electron .",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "test": "npm run test:parsers && npm run test:subtitles",
+    "test:parsers": "esbuild scripts/test-subtitles.ts --bundle --platform=node --external:electron --outfile=.test-build/test-subtitles.js --log-level=warning && node .test-build/test-subtitles.js && esbuild scripts/test-player-lifecycle.ts --bundle --platform=node --external:electron --outfile=.test-build/test-lifecycle.js --log-level=warning && node .test-build/test-lifecycle.js",
+    "test:subtitles": "esbuild scripts/test-subtitle-engine.ts --bundle --platform=node --external:electron --outfile=.test-build/test-subtitle-engine.js --log-level=warning && node .test-build/test-subtitle-engine.js",
+    "verify:server": "esbuild scripts/verify-architecture.ts --bundle --platform=node --external:electron --outfile=.test-build/verify.js --log-level=warning && node .test-build/verify.js",
+    "pack:linux": "npm run build && electron-builder --linux --publish never",
+    "pack:win": "npm run build && electron-builder --win --publish never",
+    "pack:all": "npm run build && electron-builder --linux --win --publish never",
+    "pack:win:nowine": "npm run build && electron-builder --win portable zip --x64 --publish never"
+  },
+  "homepage": "https://github.com/shahriar-ahmed-seam/MovieViewerDesktop",
+  "author": {
+    "name": "MovieViewer",
+    "email": "support@movieviewer.app"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "cheerio": "^1.0.0",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.0",
+    "electron-updater": "^6.3.0",
+    "esbuild": "0.25.12",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "wait-on": "^8.0.0"
+  },
+  "build": {
+    "appId": "com.movieviewer.desktop",
+    "productName": "MovieViewer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "node_modules/@ffmpeg-installer/ffmpeg/**/*",
+      "node_modules/@ffprobe-installer/ffprobe/**/*",
+      "!**/node_modules/@ffmpeg-installer/ffmpeg/.env",
+      "!**/node_modules/**/*~",
+      "!**/node_modules/**/{download.sh,download.js,download.ts,tsconfig.json}"
+    ],
+    "asarUnpack": [
+      "**/node_modules/@ffmpeg-installer/**",
+      "**/node_modules/@ffprobe-installer/**"
+    ],
+    "linux": {
+      "target": [
+        "deb",
+        "AppImage"
+      ],
+      "maintainer": "MovieViewer <support@movieviewer.app>",
+      "category": "AudioVideo",
+      "icon": "build/icon.png",
+      "synopsis": "Media browser and player for HTTP directory media servers",
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
+      "executableArgs": [
+        "--no-sandbox"
+      ],
+      "files": [
+        "!**/node_modules/@ffmpeg-installer/{win32,darwin}-*/**",
+        "!**/node_modules/@ffprobe-installer/{win32,darwin}-*/**"
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "files": [
+        "!**/node_modules/@ffmpeg-installer/{linux,darwin}-*/**",
+        "!**/node_modules/@ffprobe-installer/{linux,darwin}-*/**"
+      ],
+      "artifactName": "${productName}-${version}-windows-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MovieViewer",
+      "artifactName": "${productName}-Setup-${version}-windows-${arch}.${ext}"
+    },
+    "afterPack": "scripts/after-pack.js",
+    "deb": {
+      "artifactName": "${name}_${version}_${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-windows-${arch}-portable.${ext}"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shahriar-ahmed-seam/MovieViewerDesktop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shahriar-ahmed-seam/MovieViewerDesktop/issues"
+  }
+}
